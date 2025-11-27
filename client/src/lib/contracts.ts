@@ -31,9 +31,9 @@ export const SCANNER_ACCESS_ABI = [
 // Contract addresses (Deployed on Polygon Amoy Testnet)
 export const CONTRACT_ADDRESSES = {
   polygonAmoy: {
-    RiskRegistry: process.env.VITE_RISK_REGISTRY_ADDRESS || "0x3370ee55909893aBCBF47792065473Aa497c314b",
-    SafetyNFT: process.env.VITE_SAFETY_NFT_ADDRESS || "0x7fE6B061B0d5E206f8Fc9627849D419ACC2E14C1",
-    ScannerAccess: process.env.VITE_SCANNER_ACCESS_ADDRESS || "0x6d0F1885331e70fb585386B485a31f8548Ba8F3f",
+    RiskRegistry: import.meta.env.VITE_RISK_REGISTRY_ADDRESS || "0x3370ee55909893aBCBF47792065473Aa497c314b",
+    SafetyNFT: import.meta.env.VITE_SAFETY_NFT_ADDRESS || "0x7fE6B061B0d5E206f8Fc9627849D419ACC2E14C1",
+    ScannerAccess: import.meta.env.VITE_SCANNER_ACCESS_ADDRESS || "0x6d0F1885331e70fb585386B485a31f8548Ba8F3f",
   },
 };
 
