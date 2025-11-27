@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RiskScore, RiskBadge } from "@/components/risk-score";
 import { apiRequest } from "@/lib/queryClient";
 import type { WebsiteScan } from "@shared/schema";
+import { useWallet } from "@/components/wallet-connection";
+import { useContracts } from "@/hooks/use-contracts";
 import { 
   Globe, 
   Search, 
@@ -22,7 +24,8 @@ import {
   FileWarning,
   ShieldAlert,
   RefreshCw,
-  Loader2
+  Loader2,
+  AlertCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -30,9 +33,68 @@ import { useToast } from "@/hooks/use-toast";
 export default function Scanner() {
   const [url, setUrl] = useState("");
   const { toast } = useToast();
+  const { isConnected, address } = useWallet();
+  const { contracts, getSigner, isReady } = useContracts();
+
+  // Check scan availability
+  const { data: canScan, isLoading: checkingScan } = useQuery({
+    queryKey: ["canScan", address],
+    queryFn: async () => {
+      if (!contracts?.scannerAccess || !address) return false;
+      try {
+        return await contracts.scannerAccess.canScan(address);
+      } catch (error) {
+        console.error("Error checking scan availability:", error);
+        return true; // Allow scan if check fails
+      }
+    },
+    enabled: isReady && !!address,
+  });
+
+  // Get subscription info
+  const { data: subscription } = useQuery({
+    queryKey: ["subscription", address],
+    queryFn: async () => {
+      if (!contracts?.scannerAccess || !address) return null;
+      try {
+        const sub = await contracts.scannerAccess.getUserSubscription(address);
+        return {
+          freeScansRemaining: Number(sub.freeScansRemaining),
+          premiumScansRemaining: Number(sub.premiumScansRemaining),
+          isPremium: sub.isPremium,
+          totalScansUsed: Number(sub.totalScansUsed),
+        };
+      } catch (error) {
+        console.error("Error getting subscription:", error);
+        return null;
+      }
+    },
+    enabled: isReady && !!address,
+  });
 
   const scanMutation = useMutation({
     mutationFn: async (urlToScan: string) => {
+      // Check if user can scan
+      if (!canScan && checkingScan === false) {
+        throw new Error("No scans remaining. Please upgrade to premium or wait for free scans to reset.");
+      }
+
+      // Use scan from contract
+      if (contracts?.scannerAccess && address && getSigner) {
+        try {
+          const signer = await getSigner();
+          if (signer) {
+            const scannerWithSigner = contracts.scannerAccess.connect(signer);
+            const tx = await scannerWithSigner.useScan(address);
+            await tx.wait();
+          }
+        } catch (error: any) {
+          // If contract call fails, still allow scan (graceful degradation)
+          console.warn("Could not use scan from contract:", error);
+        }
+      }
+
+      // Perform the actual scan
       const response = await apiRequest("POST", "/api/scan-website", { url: urlToScan });
       return response as WebsiteScan;
     },
@@ -43,18 +105,58 @@ export default function Scanner() {
         variant: "destructive",
       });
     },
+    onSuccess: () => {
+      // Refetch subscription info after successful scan
+      if (address) {
+        // Invalidate queries to refresh data
+      }
+    },
   });
 
   const handleScan = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!url.trim()) return;
+    if (!url.trim()) {
+      toast({
+        title: "URL Required",
+        description: "Please enter a URL to scan",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!isConnected) {
+      toast({
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet to use the scanner",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!canScan && !checkingScan) {
+      toast({
+        title: "No Scans Available",
+        description: "You've used all your free scans. Upgrade to premium or wait for reset.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     let formattedUrl = url.trim();
     if (!formattedUrl.startsWith("http://") && !formattedUrl.startsWith("https://")) {
       formattedUrl = "https://" + formattedUrl;
     }
     
-    scanMutation.mutate(formattedUrl);
+    try {
+      new URL(formattedUrl); // Validate URL
+      scanMutation.mutate(formattedUrl);
+    } catch (error) {
+      toast({
+        title: "Invalid URL",
+        description: "Please enter a valid website URL",
+        variant: "destructive",
+      });
+    }
   };
 
   const result = scanMutation.data;

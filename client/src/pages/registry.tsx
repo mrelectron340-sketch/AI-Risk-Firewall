@@ -32,62 +32,9 @@ export default function RegistryPage() {
     queryKey: ["/api/registry"],
   });
 
-  const mockContracts: ContractRegistry[] = contracts || [
-    {
-      id: "1",
-      address: "0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0",
-      chain: "polygon",
-      name: "MATIC Token",
-      status: "safe",
-      reportCount: 0,
-      verifiedBy: "Polygon Foundation",
-      addedDate: "2023-01-15T00:00:00Z",
-      lastUpdated: "2024-11-01T00:00:00Z",
-    },
-    {
-      id: "2",
-      address: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
-      chain: "polygon",
-      name: "USD Coin (PoS)",
-      status: "safe",
-      reportCount: 0,
-      verifiedBy: "Circle",
-      addedDate: "2023-02-20T00:00:00Z",
-      lastUpdated: "2024-10-15T00:00:00Z",
-    },
-    {
-      id: "3",
-      address: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-      chain: "polygon",
-      name: "Fake Airdrop Token",
-      status: "dangerous",
-      reportCount: 156,
-      addedDate: "2024-11-20T00:00:00Z",
-      lastUpdated: "2024-11-25T00:00:00Z",
-    },
-    {
-      id: "4",
-      address: "0x1234567890abcdef1234567890abcdef12345678",
-      chain: "polygon",
-      name: "Unknown Token",
-      status: "suspicious",
-      reportCount: 23,
-      addedDate: "2024-11-22T00:00:00Z",
-      lastUpdated: "2024-11-25T00:00:00Z",
-    },
-    {
-      id: "5",
-      address: "0xabcdef1234567890abcdef1234567890abcdef12",
-      chain: "polygon",
-      name: "New Contract",
-      status: "unverified",
-      reportCount: 0,
-      addedDate: "2024-11-27T00:00:00Z",
-      lastUpdated: "2024-11-27T00:00:00Z",
-    },
-  ];
+  const displayContracts: ContractRegistry[] = contracts || [];
 
-  const filteredContracts = mockContracts.filter((contract) => {
+  const filteredContracts = displayContracts.filter((contract) => {
     const matchesSearch = 
       contract.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (contract.name?.toLowerCase().includes(searchQuery.toLowerCase()));

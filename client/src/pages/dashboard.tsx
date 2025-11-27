@@ -69,70 +69,30 @@ export default function Dashboard() {
     );
   }
 
-  const mockStats: DailyReport = stats || {
+  // Use real data from API, show empty state if no data
+  const displayStats: DailyReport = stats || {
     id: "1",
     walletAddress: address || "",
     date: new Date().toISOString(),
-    threatsBlocked: 12,
-    contractsFlagged: 3,
-    tokensAnalyzed: 28,
-    transactionsScanned: 156,
-    riskySitesBlocked: 7,
-    overallSafetyScore: 94,
+    threatsBlocked: 0,
+    contractsFlagged: 0,
+    tokensAnalyzed: 0,
+    transactionsScanned: 0,
+    riskySitesBlocked: 0,
+    overallSafetyScore: 100, // Start at 100 for new users
   };
 
-  const mockActivities: ProtectionLog[] = activities || [
-    {
-      id: "1",
-      walletAddress: address || "",
-      actionType: "website_blocked",
-      targetUrl: "claim-airdrop2025.com",
-      riskScore: 15,
-      riskLevel: "danger",
-      description: "Phishing website blocked - fake airdrop claim",
-      timestamp: new Date(Date.now() - 300000).toISOString(),
-    },
-    {
-      id: "2",
-      walletAddress: address || "",
-      actionType: "contract_flagged",
-      targetAddress: "0x742d35Cc6634C0532925a3b844Bc9e7595f2bd3e",
-      riskScore: 32,
-      riskLevel: "danger",
-      description: "Honeypot contract detected - sell function disabled",
-      timestamp: new Date(Date.now() - 900000).toISOString(),
-    },
-    {
-      id: "3",
-      walletAddress: address || "",
-      actionType: "token_warning",
-      targetAddress: "0x1234567890abcdef1234567890abcdef12345678",
-      riskScore: 55,
-      riskLevel: "warning",
-      description: "High sell tax detected (15%)",
-      timestamp: new Date(Date.now() - 1800000).toISOString(),
-    },
-    {
-      id: "4",
-      walletAddress: address || "",
-      actionType: "transaction_blocked",
-      targetAddress: "0xabcdef1234567890abcdef1234567890abcdef12",
-      riskScore: 22,
-      riskLevel: "danger",
-      description: "Wallet linked to known drainer - transaction blocked",
-      timestamp: new Date(Date.now() - 3600000).toISOString(),
-    },
-  ];
+  const displayActivities: ProtectionLog[] = activities || [];
 
-  const mockTrustNFT: TrustNFT = trustNFT || {
+  const displayTrustNFT: TrustNFT = trustNFT || {
     id: "1",
     walletAddress: address || "",
-    tokenId: "1234",
-    trustScore: 78,
-    scamsAvoided: 12,
-    safeTransactions: 156,
-    rank: "#2,847",
-    tier: "gold",
+    tokenId: null,
+    trustScore: 100, // Start at 100 for new users
+    scamsAvoided: 0,
+    safeTransactions: 0,
+    rank: "N/A",
+    tier: "bronze",
     lastUpdated: new Date().toISOString(),
   };
 
@@ -167,29 +127,28 @@ export default function Dashboard() {
           <>
             <StatsCard
               title="Threats Blocked"
-              value={mockStats.threatsBlocked}
+              value={displayStats.threatsBlocked}
               subtitle="Today"
               icon={ShieldBan}
               variant="danger"
-              trend={{ value: 23, isPositive: false }}
             />
             <StatsCard
               title="Contracts Flagged"
-              value={mockStats.contractsFlagged}
+              value={displayStats.contractsFlagged}
               subtitle="This week"
               icon={FileCode}
               variant="warning"
             />
             <StatsCard
               title="Tokens Analyzed"
-              value={mockStats.tokensAnalyzed}
+              value={displayStats.tokensAnalyzed}
               subtitle="This month"
               icon={Coins}
               variant="default"
             />
             <StatsCard
               title="Safety Score"
-              value={`${mockStats.overallSafetyScore}%`}
+              value={`${displayStats.overallSafetyScore}%`}
               subtitle="Overall protection"
               icon={TrendingUp}
               variant="success"
@@ -200,10 +159,30 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <ActivityFeed 
-            activities={mockActivities} 
-            maxItems={6}
-          />
+          {displayActivities.length > 0 ? (
+            <ActivityFeed 
+              activities={displayActivities} 
+              maxItems={6}
+            />
+          ) : (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Shield className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                <h3 className="font-semibold mb-2">No Activity Yet</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Start scanning websites, contracts, and tokens to see your protection activity here.
+                </p>
+                <div className="flex gap-2 justify-center">
+                  <Button variant="outline" asChild size="sm">
+                    <Link href="/scanner">Scan Website</Link>
+                  </Button>
+                  <Button variant="outline" asChild size="sm">
+                    <Link href="/contracts">Analyze Contract</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader className="pb-3">
@@ -247,7 +226,7 @@ export default function Dashboard() {
         </div>
 
         <div className="space-y-6">
-          <TrustNFTDisplay nft={mockTrustNFT} />
+          <TrustNFTDisplay nft={displayTrustNFT} />
 
           <Card>
             <CardHeader className="pb-3">
@@ -258,20 +237,20 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-center py-4">
-                <RiskScore score={mockStats.overallSafetyScore} size="lg" />
+                <RiskScore score={displayStats.overallSafetyScore} size="lg" />
               </div>
               <div className="space-y-3 mt-4">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Websites Scanned</span>
-                  <span className="font-medium">{mockStats.riskySitesBlocked + 24}</span>
+                  <span className="font-medium">{displayStats.riskySitesBlocked + (displayStats.transactionsScanned || 0)}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Risky Sites Blocked</span>
-                  <span className="font-medium text-danger">{mockStats.riskySitesBlocked}</span>
+                  <span className="font-medium text-danger">{displayStats.riskySitesBlocked}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Transactions Scanned</span>
-                  <span className="font-medium">{mockStats.transactionsScanned}</span>
+                  <span className="font-medium">{displayStats.transactionsScanned}</span>
                 </div>
               </div>
             </CardContent>

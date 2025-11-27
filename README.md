@@ -109,16 +109,23 @@ npx hardhat test
 - Polygon Amoy Testnet
 - OpenZeppelin Contracts
 
-## 📝 Smart Contracts
+## 📝 Smart Contracts (Deployed on Polygon Amoy)
 
 ### RiskRegistry
+**Address:** `0x3370ee55909893aBCBF47792065473Aa497c314b`  
 On-chain registry for logging detected scams and risks. Stores risk reports with scores, timestamps, and threat types.
 
 ### SafetyNFT
+**Address:** `0x7fE6B061B0d5E206f8Fc9627849D419ACC2E14C1`  
 Soulbound Token (SBT) representing user's safety reputation. Non-transferable NFT that tracks security scores, scams avoided, and safe transactions.
 
 ### ScannerAccess
+**Address:** `0x6d0F1885331e70fb585386B485a31f8548Ba8F3f`  
 Manages access control and pricing for scanner features. Handles free scans, premium subscriptions, and pay-per-scan options.
+
+**Network:** Polygon Amoy Testnet (Chain ID: 80002)  
+**Deployer:** `0x10ac9924a78051BdD770978740C5084205cdB628`  
+**Deployed:** November 27, 2025
 
 ## 🎨 UI Features
 

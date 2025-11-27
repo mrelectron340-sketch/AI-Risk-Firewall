@@ -28,14 +28,20 @@ export const SCANNER_ACCESS_ABI = [
   "event ScanUsed(address indexed user, bool isPremium, uint256 scansRemaining)",
 ];
 
-// Contract addresses (will be updated after deployment)
+// Contract addresses (Deployed on Polygon Amoy Testnet)
 export const CONTRACT_ADDRESSES = {
   polygonAmoy: {
-    RiskRegistry: process.env.VITE_RISK_REGISTRY_ADDRESS || "",
-    SafetyNFT: process.env.VITE_SAFETY_NFT_ADDRESS || "",
-    ScannerAccess: process.env.VITE_SCANNER_ACCESS_ADDRESS || "",
+    RiskRegistry: process.env.VITE_RISK_REGISTRY_ADDRESS || "0x3370ee55909893aBCBF47792065473Aa497c314b",
+    SafetyNFT: process.env.VITE_SAFETY_NFT_ADDRESS || "0x7fE6B061B0d5E206f8Fc9627849D419ACC2E14C1",
+    ScannerAccess: process.env.VITE_SCANNER_ACCESS_ADDRESS || "0x6d0F1885331e70fb585386B485a31f8548Ba8F3f",
   },
 };
+
+// Get contract address for current network
+export function getContractAddress(contractName: "RiskRegistry" | "SafetyNFT" | "ScannerAccess"): string {
+  const addresses = CONTRACT_ADDRESSES.polygonAmoy;
+  return addresses[contractName];
+}
 
 // Polygon Amoy chain config
 export const POLYGON_AMOY_CHAIN = {

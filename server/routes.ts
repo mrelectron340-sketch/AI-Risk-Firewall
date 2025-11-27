@@ -31,6 +31,13 @@ export async function registerRoutes(
     try {
       const { url } = scanWebsiteRequestSchema.parse(req.body);
       
+      // Validate URL format
+      try {
+        new URL(url);
+      } catch {
+        return res.status(400).json({ error: "Invalid URL format" });
+      }
+      
       // Check if we've recently scanned this URL
       const existingScan = await storage.getWebsiteScanByUrl(url);
       if (existingScan) {
@@ -45,7 +52,12 @@ export async function registerRoutes(
       const analysis = await analyzeWebsiteUrl(url);
       
       // Extract domain
-      const domain = new URL(url).hostname;
+      let domain = url;
+      try {
+        domain = new URL(url).hostname;
+      } catch {
+        // If URL parsing fails, use the original URL
+      }
       
       // Store scan result
       const scan = await storage.createWebsiteScan({
@@ -64,7 +76,7 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Invalid request data", details: error.errors });
       }
       console.error("Website scan error:", error);
-      res.status(500).json({ error: "Failed to scan website" });
+      res.status(500).json({ error: "Failed to scan website. Please try again." });
     }
   });
 
@@ -72,6 +84,11 @@ export async function registerRoutes(
   app.post("/api/analyze-contract", async (req, res) => {
     try {
       const { address, chain } = analyzeContractRequestSchema.parse(req.body);
+      
+      // Validate address format
+      if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+        return res.status(400).json({ error: "Invalid contract address format" });
+      }
       
       // Check if we've recently analyzed this contract
       const existingAnalysis = await storage.getContractAnalysisByAddress(address);
@@ -110,7 +127,7 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Invalid request data", details: error.errors });
       }
       console.error("Contract analysis error:", error);
-      res.status(500).json({ error: "Failed to analyze contract" });
+      res.status(500).json({ error: "Failed to analyze contract. Please try again." });
     }
   });
 
@@ -118,6 +135,11 @@ export async function registerRoutes(
   app.post("/api/analyze-token", async (req, res) => {
     try {
       const { address, chain } = analyzeTokenRequestSchema.parse(req.body);
+      
+      // Validate address format
+      if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+        return res.status(400).json({ error: "Invalid token address format" });
+      }
       
       // Check if we've recently analyzed this token
       const existingAnalysis = await storage.getTokenAnalysisByAddress(address);
@@ -162,7 +184,7 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Invalid request data", details: error.errors });
       }
       console.error("Token analysis error:", error);
-      res.status(500).json({ error: "Failed to analyze token" });
+      res.status(500).json({ error: "Failed to analyze token. Please try again." });
     }
   });
 
@@ -170,6 +192,11 @@ export async function registerRoutes(
   app.post("/api/check-wallet", async (req, res) => {
     try {
       const { address } = checkWalletRequestSchema.parse(req.body);
+      
+      // Validate address format
+      if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+        return res.status(400).json({ error: "Invalid wallet address format" });
+      }
       
       // Check existing reputation
       let reputation = await storage.getWalletReputation(address);
@@ -205,16 +232,20 @@ export async function registerRoutes(
     try {
       const { address } = req.params;
       
+      if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+        return res.status(400).json({ error: "Invalid wallet address" });
+      }
+      
       let nft = await storage.getTrustNFT(address);
       
       if (!nft) {
         // Create initial Trust NFT data (not minted yet)
         nft = await storage.createTrustNFT({
           walletAddress: address,
-          trustScore: 50,
+          trustScore: 100,
           scamsAvoided: 0,
           safeTransactions: 0,
-          rank: "#10,000+",
+          rank: "N/A",
           tier: "bronze",
           lastUpdated: new Date().toISOString(),
         });
@@ -254,10 +285,10 @@ export async function registerRoutes(
         nft = await storage.createTrustNFT({
           walletAddress,
           tokenId,
-          trustScore: 50,
+          trustScore: 100,
           scamsAvoided: 0,
           safeTransactions: 0,
-          rank: "#10,000+",
+          rank: "N/A",
           tier: "bronze",
           lastUpdated: new Date().toISOString(),
         });
@@ -274,8 +305,13 @@ export async function registerRoutes(
   app.get("/api/activities/:address", async (req, res) => {
     try {
       const { address } = req.params;
+      
+      if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+        return res.status(400).json({ error: "Invalid wallet address" });
+      }
+      
       const logs = await storage.getProtectionLogs(address);
-      res.json(logs);
+      res.json(logs || []);
     } catch (error) {
       console.error("Activities error:", error);
       res.status(500).json({ error: "Failed to get activities" });
@@ -287,10 +323,14 @@ export async function registerRoutes(
     try {
       const { address } = req.params;
       
+      if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+        return res.status(400).json({ error: "Invalid wallet address" });
+      }
+      
       let report = await storage.getLatestDailyReport(address);
       
       if (!report) {
-        // Create default stats
+        // Create default stats for new users
         report = await storage.createDailyReport({
           walletAddress: address,
           date: new Date().toISOString().split("T")[0],
@@ -299,7 +339,7 @@ export async function registerRoutes(
           tokensAnalyzed: 0,
           transactionsScanned: 0,
           riskySitesBlocked: 0,
-          overallSafetyScore: 85,
+          overallSafetyScore: 100,
         });
       }
       
@@ -314,7 +354,7 @@ export async function registerRoutes(
   app.get("/api/registry", async (req, res) => {
     try {
       const registry = await storage.getContractRegistry();
-      res.json(registry);
+      res.json(registry || []);
     } catch (error) {
       console.error("Registry error:", error);
       res.status(500).json({ error: "Failed to get registry" });
@@ -361,6 +401,10 @@ export async function registerRoutes(
         return res.status(400).json({ error: "From and to addresses are required" });
       }
 
+      if (!/^0x[a-fA-F0-9]{40}$/.test(from) || !/^0x[a-fA-F0-9]{40}$/.test(to)) {
+        return res.status(400).json({ error: "Invalid address format" });
+      }
+
       // Use AI analyzer for simulation
       const { simulateTransaction } = await import("./ai-analyzer");
       const result = await simulateTransaction(from, to, data || "0x");
@@ -379,6 +423,38 @@ export async function registerRoutes(
         warnings: ["Simulation unavailable - proceed with caution"],
         analysis: "Unable to analyze transaction. Please review manually before proceeding.",
       });
+    }
+  });
+
+  // Analytics endpoint
+  app.get("/api/analytics/:address", async (req, res) => {
+    try {
+      const { address } = req.params;
+      
+      if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+        return res.status(400).json({ error: "Invalid wallet address" });
+      }
+
+      // Get stats and activities to build analytics
+      const stats = await storage.getLatestDailyReport(address);
+      const activities = await storage.getProtectionLogs(address) || [];
+      
+      // Build analytics from real data
+      const analytics = {
+        totalScans: stats?.transactionsScanned || 0,
+        threatsBlocked: stats?.threatsBlocked || 0,
+        contractsAnalyzed: stats?.contractsFlagged || 0,
+        tokensChecked: stats?.tokensAnalyzed || 0,
+        safetyScore: stats?.overallSafetyScore || 100,
+        weeklyData: [], // Can be enhanced with time-series data
+        threatTypes: [],
+        riskDistribution: [],
+      };
+
+      res.json(analytics);
+    } catch (error) {
+      console.error("Analytics error:", error);
+      res.status(500).json({ error: "Failed to get analytics" });
     }
   });
 

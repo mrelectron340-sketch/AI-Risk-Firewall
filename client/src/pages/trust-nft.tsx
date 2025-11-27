@@ -165,23 +165,24 @@ export default function TrustNFTPage() {
     );
   }
 
-  const mockNFT: TrustNFT = nft || {
+  // Use real NFT data or show default for new users
+  const displayNFT: TrustNFT = nft || {
     id: "1",
     walletAddress: address || "",
-    tokenId: "1234",
-    trustScore: 78,
-    scamsAvoided: 12,
-    safeTransactions: 156,
-    rank: "#2,847",
-    tier: "gold",
+    tokenId: null,
+    trustScore: 100, // Start at 100 for new users
+    scamsAvoided: 0,
+    safeTransactions: 0,
+    rank: "N/A",
+    tier: "bronze",
     lastUpdated: new Date().toISOString(),
   };
 
-  const tierConfig = getTierConfig(mockNFT.tier);
+  const tierConfig = getTierConfig(displayNFT.tier);
   const TierIcon = tierConfig.icon;
-  const progressToNextTier = mockNFT.trustScore >= 100 
+  const progressToNextTier = displayNFT.trustScore >= 100 
     ? 100 
-    : ((mockNFT.trustScore - tierConfig.minScore) / (tierConfig.maxScore - tierConfig.minScore)) * 100;
+    : ((displayNFT.trustScore - tierConfig.minScore) / (tierConfig.maxScore - tierConfig.minScore)) * 100;
 
   return (
     <div className="space-y-6">
@@ -192,7 +193,7 @@ export default function TrustNFTPage() {
             Your on-chain security reputation badge
           </p>
         </div>
-        {mockNFT.tokenId && (
+        {displayNFT.tokenId && (
           <Button variant="outline" size="sm" className="gap-2" asChild>
             <a
               href="#"
@@ -221,7 +222,7 @@ export default function TrustNFTPage() {
                 
                 <div className="flex-1 text-center md:text-left">
                   <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
-                    <h2 className="text-3xl font-bold">{mockNFT.trustScore}</h2>
+                    <h2 className="text-3xl font-bold">{displayNFT.trustScore}</h2>
                     <span className="text-muted-foreground">/100</span>
                     <Badge variant="outline" className={cn("ml-2", tierConfig.color)}>
                       {tierConfig.label} Tier
@@ -241,7 +242,7 @@ export default function TrustNFTPage() {
                       </div>
                       <Progress value={progressToNextTier} className="h-2" />
                       <p className="text-xs text-muted-foreground">
-                        {tierConfig.maxScore - mockNFT.trustScore} more points needed
+                        {tierConfig.maxScore - displayNFT.trustScore} more points needed
                       </p>
                     </div>
                   )}
@@ -258,7 +259,7 @@ export default function TrustNFTPage() {
                     <Shield className="w-5 h-5 text-danger" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{mockNFT.scamsAvoided}</p>
+                    <p className="text-2xl font-bold">{displayNFT.scamsAvoided}</p>
                     <p className="text-xs text-muted-foreground">Scams Avoided</p>
                   </div>
                 </div>
@@ -271,7 +272,7 @@ export default function TrustNFTPage() {
                     <CheckCircle className="w-5 h-5 text-success" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{mockNFT.safeTransactions}</p>
+                    <p className="text-2xl font-bold">{displayNFT.safeTransactions}</p>
                     <p className="text-xs text-muted-foreground">Safe Transactions</p>
                   </div>
                 </div>
@@ -284,7 +285,7 @@ export default function TrustNFTPage() {
                     <Sparkles className="w-5 h-5 text-warning" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{mockNFT.rank}</p>
+                    <p className="text-2xl font-bold">{displayNFT.rank}</p>
                     <p className="text-xs text-muted-foreground">Global Rank</p>
                   </div>
                 </div>
@@ -349,10 +350,10 @@ export default function TrustNFTPage() {
               <div className="space-y-2">
                 {[
                   { tier: "Bronze", benefit: "Basic protection alerts", unlocked: true },
-                  { tier: "Silver", benefit: "Priority scanning", unlocked: mockNFT.trustScore >= 31 },
-                  { tier: "Gold", benefit: "Enhanced AI analysis", unlocked: mockNFT.trustScore >= 51 },
-                  { tier: "Platinum", benefit: "Real-time threat intel", unlocked: mockNFT.trustScore >= 71 },
-                  { tier: "Diamond", benefit: "Custom security rules", unlocked: mockNFT.trustScore >= 91 },
+                  { tier: "Silver", benefit: "Priority scanning", unlocked: displayNFT.trustScore >= 31 },
+                  { tier: "Gold", benefit: "Enhanced AI analysis", unlocked: displayNFT.trustScore >= 51 },
+                  { tier: "Platinum", benefit: "Real-time threat intel", unlocked: displayNFT.trustScore >= 71 },
+                  { tier: "Diamond", benefit: "Custom security rules", unlocked: displayNFT.trustScore >= 91 },
                 ].map((item, index) => (
                   <div key={index} className={cn(
                     "flex items-center gap-3 p-3 rounded-lg",
@@ -405,7 +406,7 @@ export default function TrustNFTPage() {
             </CardContent>
           </Card>
 
-          {!mockNFT.tokenId && (
+          {!displayNFT.tokenId && (
             <Card className="border-primary/50 bg-primary/5">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3 mb-3">

@@ -18,40 +18,26 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 export default function AnalyticsPage() {
   const { isConnected, address } = useWallet();
 
-  // Mock analytics data - replace with real API calls
+  // Get real analytics data from API
   const { data: analytics, isLoading } = useQuery({
     queryKey: ["/api/analytics", address],
     enabled: isConnected,
     queryFn: async () => {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return {
-        totalScans: 156,
-        threatsBlocked: 23,
-        contractsAnalyzed: 89,
-        tokensChecked: 67,
-        safetyScore: 94,
-        weeklyData: [
-          { day: "Mon", scans: 12, threats: 2, contracts: 8 },
-          { day: "Tue", scans: 18, threats: 3, contracts: 12 },
-          { day: "Wed", scans: 15, threats: 1, contracts: 10 },
-          { day: "Thu", scans: 22, threats: 4, contracts: 15 },
-          { day: "Fri", scans: 28, threats: 5, contracts: 18 },
-          { day: "Sat", scans: 35, threats: 6, contracts: 14 },
-          { day: "Sun", scans: 26, threats: 2, contracts: 12 },
-        ],
-        threatTypes: [
-          { name: "Phishing", value: 45, color: "#ef4444" },
-          { name: "Honeypot", value: 25, color: "#f59e0b" },
-          { name: "Rug Pull", value: 20, color: "#dc2626" },
-          { name: "Malicious Script", value: 10, color: "#991b1b" },
-        ],
-        riskDistribution: [
-          { level: "Safe", count: 120, color: "#22c55e" },
-          { level: "Warning", count: 28, color: "#f59e0b" },
-          { level: "Danger", count: 8, color: "#ef4444" },
-        ],
-      };
+      const response = await fetch(`/api/analytics/${address}`);
+      if (!response.ok) {
+        // Return empty data if API fails
+        return {
+          totalScans: 0,
+          threatsBlocked: 0,
+          contractsAnalyzed: 0,
+          tokensChecked: 0,
+          safetyScore: 100,
+          weeklyData: [],
+          threatTypes: [],
+          riskDistribution: [],
+        };
+      }
+      return response.json();
     },
   });
 
@@ -89,11 +75,14 @@ export default function AnalyticsPage() {
     threatsBlocked: 0,
     contractsAnalyzed: 0,
     tokensChecked: 0,
-    safetyScore: 0,
+    safetyScore: 100,
     weeklyData: [],
     threatTypes: [],
     riskDistribution: [],
   };
+
+  // Show empty state if no data
+  const hasData = stats.totalScans > 0 || stats.contractsAnalyzed > 0;
 
   return (
     <div className="space-y-6">
@@ -172,78 +161,85 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Weekly Activity</CardTitle>
-            <CardDescription>Scans, threats, and contracts analyzed</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={stats.weeklyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="day" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="scans" stroke="#3b82f6" name="Scans" />
-                <Line type="monotone" dataKey="threats" stroke="#ef4444" name="Threats" />
-                <Line type="monotone" dataKey="contracts" stroke="#22c55e" name="Contracts" />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      {hasData ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {stats.weeklyData.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Weekly Activity</CardTitle>
+                <CardDescription>Scans, threats, and contracts analyzed</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={stats.weeklyData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="day" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="scans" stroke="#3b82f6" name="Scans" />
+                    <Line type="monotone" dataKey="threats" stroke="#ef4444" name="Threats" />
+                    <Line type="monotone" dataKey="contracts" stroke="#22c55e" name="Contracts" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Threat Types Distribution</CardTitle>
-            <CardDescription>Breakdown of detected threats</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <RechartsPieChart>
-                <Tooltip />
-                <Legend />
-                <RechartsPieChart
-                  data={stats.threatTypes}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {stats.threatTypes.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </RechartsPieChart>
-              </RechartsPieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+          {stats.threatTypes.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Threat Types Distribution</CardTitle>
+                <CardDescription>Breakdown of detected threats</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <RechartsPieChart>
+                    <Tooltip />
+                    <Legend />
+                    <RechartsPieChart
+                      data={stats.threatTypes}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {stats.threatTypes.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </RechartsPieChart>
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Risk Level Distribution</CardTitle>
-            <CardDescription>Analysis results by risk level</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={stats.riskDistribution}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="level" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" fill="#8884d8">
-                  {stats.riskDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+          {stats.riskDistribution.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Risk Level Distribution</CardTitle>
+                <CardDescription>Analysis results by risk level</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={stats.riskDistribution}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="level" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#8884d8">
+                      {stats.riskDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
 
         <Card>
           <CardHeader>
@@ -277,6 +273,17 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
       </div>
+      ) : (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+            <h3 className="font-semibold mb-2">No Analytics Data Yet</h3>
+            <p className="text-sm text-muted-foreground">
+              Start using the scanner and analyzer to see your analytics here.
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
