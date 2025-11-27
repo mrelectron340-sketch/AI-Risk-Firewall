@@ -185,6 +185,49 @@ export default function Scanner() {
         </p>
       </div>
 
+      {/* Subscription Info */}
+      {isConnected && subscription && (
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Free Scans Remaining</p>
+                  <p className="text-2xl font-bold">{subscription.freeScansRemaining}</p>
+                </div>
+                {subscription.isPremium && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Premium Scans</p>
+                    <p className="text-2xl font-bold text-primary">Unlimited</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Scans Used</p>
+                  <p className="text-2xl font-bold">{subscription.totalScansUsed}</p>
+                </div>
+              </div>
+              {subscription.freeScansRemaining === 0 && !subscription.isPremium && (
+                <Button variant="outline" asChild>
+                  <a href="/pricing">Upgrade to Premium</a>
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!isConnected && (
+        <Card>
+          <CardContent className="p-6 text-center">
+            <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="font-semibold mb-2">Connect Wallet Required</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Please connect your wallet to use the website scanner
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
@@ -210,7 +253,7 @@ export default function Scanner() {
             </div>
             <Button 
               type="submit" 
-              disabled={scanMutation.isPending || !url.trim()}
+              disabled={!isConnected || scanMutation.isPending || !url.trim() || checkingScan || (canScan === false && !checkingScan)}
               className="gap-2"
               data-testid="button-scan"
             >
