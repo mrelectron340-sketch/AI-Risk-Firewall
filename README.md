@@ -161,11 +161,6 @@ MIT License - see LICENSE file for details
 - OpenZeppelin for secure contract libraries
 - Polygon for testnet infrastructure
 - OpenAI for AI analysis capabilities
-
-## 📞 Support
-
-For support, email support@airiskfirewall.com or open an issue on GitHub.
-
----
+ 
 
 **⚠️ Disclaimer**: This is a security tool. Always verify contracts and websites yourself. This tool is not a guarantee of safety.
